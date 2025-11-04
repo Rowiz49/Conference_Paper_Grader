@@ -1,13 +1,16 @@
 {% load tailwind_tags %}
 {% load lucide %}
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<head>
-    <title>My Django App</title>
-    {% tailwind_css %}
-</head>
-<body>
-    {% block content %} {% endblock %}
-</body>
+    <head>
+        <meta name="keywords" content="science,ai,conference,paper,grader" />
+        <meta name="description"
+              content="Webapp to use LLMs to grade conference papers" />
+        <title>Paper Grader for Conferences</title>
+        {% tailwind_css %}
+    </head>
+    <body>
+        {% block content %}
+        {% endblock content %}
+    </body>
+</html>

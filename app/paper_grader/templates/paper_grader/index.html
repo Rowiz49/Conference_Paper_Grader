@@ -1,46 +1,39 @@
 {% extends "paper_grader/base.html" %}
 {% load lucide %}
-
 {% block content %}
-<div class="max-w-md mx-auto mt-8 card bg-base-100 shadow-sm border border-base-200">
-    <div class="card-body py-4">
-        <h2 class="card-title text-sm font-semibold text-base-content/70">Conferences</h2>
-
-        <form id="conference-selector" method="get" action="" class="flex flex-col gap-2">
-            <select id="conference" name="conference" class="select select-sm select-bordered w-full">
-                <option value="">-- Choose a conference --</option>
-                {% for conference in conferences %}
-                    <option value="{{ conference.id }}">{{ conference.name }}</option>
-                {% endfor %}
-            </select>
-        </form>
-
-        <div class="flex justify-end gap-2 mt-2">
-            <!-- Create -->
-            <a href="{% url 'conference_create' %}" 
-               class="btn btn-ghost btn-xs tooltip tooltip-top" 
-               data-tip="Create">
-                {% lucide "plus" class="text-success" size=20 %}
-            </a>
-
-            <!-- Edit -->
-            <a id="edit-btn" href="#" 
-               class="btn btn-ghost btn-xs tooltip tooltip-top" 
-               data-tip="Edit">
-                {% lucide "pencil" class="text-info" size=20 %}
-            </a>
-
-            <!-- Delete -->
-            <a id="delete-btn" href="#" 
-               class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50" 
-               data-tip="Delete">
-                {% lucide "trash-2" class="text-error" size=20 %}
-            </a>
+    <div class="max-w-md mx-auto mt-8 card bg-base-100 shadow-sm border border-base-200">
+        <div class="card-body py-4">
+            <h2 class="card-title text-sm font-semibold text-base-content/70">Conferences</h2>
+            <form id="conference-selector"
+                  method="get"
+                  action=""
+                  class="flex flex-col gap-2">
+                <select id="conference"
+                        name="conference"
+                        class="select select-sm select-bordered w-full">
+                    <option value="">-- Choose a conference --</option>
+                    {% for conference in conferences %}<option value="{{ conference.id }}">{{ conference.name }}</option>{% endfor %}
+                </select>
+            </form>
+            <div class="flex justify-end gap-2 mt-2">
+                <!-- Create -->
+                <a href="{% url 'conference_create' %}"
+                   class="btn btn-ghost btn-xs tooltip tooltip-top"
+                   data-tip="Create">{% lucide "plus" class="text-success" size=20 %}</a>
+                <!-- Edit -->
+                <a id="edit-btn"
+                   href="#"
+                   class="btn btn-ghost btn-xs tooltip tooltip-top"
+                   data-tip="Edit">{% lucide "pencil" class="text-info" size=20 %}</a>
+                <!-- Delete -->
+                <a id="delete-btn"
+                   href="#"
+                   class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50"
+                   data-tip="Delete">{% lucide "trash-2" class="text-error" size=20 %}</a>
+            </div>
         </div>
     </div>
-</div>
-
-<script>
+    <script>
 document.addEventListener("DOMContentLoaded", () => {
     const selector = document.getElementById("conference");
     const editBtn = document.getElementById("edit-btn");
@@ -59,5 +52,5 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
-</script>
-{% endblock %}
+    </script>
+{% endblock content %}

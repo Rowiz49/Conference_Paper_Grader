@@ -1,38 +1,108 @@
-<form method="post">
-  {% csrf_token %}
-
-  <h2>Conference</h2>
-  {{ conference_form.as_p }}
-
-  <h3>Questions</h3>
-  {{ formset.management_form }}
-  <div id="questions">
-      {% for form in formset %}
-          <div class="question-form">
-              {{ form.as_p }}
+{% extends "paper_grader/base.html" %}
+{% load lucide %}
+{% block content %}
+  <div class="max-w-2xl mx-auto mt-8">
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body space-y-6">
+        <form method="post" class="space-y-6">
+          {% csrf_token %}
+          <!-- Conference -->
+          <div>
+            <h2 class="card-title text-base font-semibold text-base-content/70">Conference</h2>
+            {{ conference_form.non_field_errors }}
+            {% for field in conference_form %}
+              <div class="form-control mt-2">
+                <label class="input">
+                  <span class="label">{{ field.label }}</span>
+                  {{ field }}
+                </label>
+                {% if field.errors %}<p class="text-error text-sm mt-1">{{ field.errors|striptags }}</p>{% endif %}
+              </div>
+            {% endfor %}
           </div>
-      {% endfor %}
+          <!-- Questions -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-semibold text-base-content/70">Questions</h3>
+              <button type="button"
+                      id="add-question"
+                      class="btn btn-xs btn-ghost text-success flex items-center gap-1">
+                {% lucide "plus" size=16 class="text-success" %} Add
+              </button>
+            </div>
+            {{ formset.management_form }}
+            <div id="questions" class="space-y-3">
+              {% for form in formset %}
+                <div id="question-form"
+                     class="p-3 rounded-lg border border-base-200 bg-base-200/30 flex flex-col gap-1">
+                  {{ form.non_field_errors }}
+                  {% for field in form.visible_fields %}
+                    {% if field.name != "DELETE" %}
+                      <label class="floating-label">
+                        <span class="label">{{ field.label }}</span>
+                        {{ field }}
+                      </label>
+                      {% if field.errors %}<p class="text-error text-sm mt-1">{{ field.errors|striptags }}</p>{% endif %}
+                    {% else %}
+                      <button type="button"
+                              id="delete-question"
+                              class="btn btn-xs btn-ghost text-error flex items-center gap-1">
+                        {% lucide "trash-2" size=14 class="text-error" %} Remove
+                      </button>
+                      <div class="hidden">{{ field }}</div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <!-- Submit -->
+          <div class="flex justify-end">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
-
-  <button type="button" id="add-question">Add another question</button>
-  <button type="submit">Save</button>
-</form>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
     const addButton = document.getElementById("add-question");
     const formContainer = document.getElementById("questions");
     const totalForms = document.getElementById("id_question_set-TOTAL_FORMS");
 
-    addButton.addEventListener("click", function() {
-        const formCount = Numbner.parseInt(totalForms.value);
-        const newFormHtml = formContainer.children[0].outerHTML.replaceAll(
-            `question_set-(\\d+)`,
-            `question_set-${formCount}`
-        );
+    // Add new form
+    addButton.addEventListener("click", () => {
+      const formCount = Number.parseInt(totalForms.value);
+      const formRegex = `question_set-(\\d+)`;
+      const newFormHtml = formContainer.children[0].outerHTML.replace(formRegex, `question_set-${formCount}`);
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = newFormHtml;
+      const newForm = tempDiv.firstElementChild;
 
-        formContainer.insertAdjacentHTML("beforeend", newFormHtml);
-        totalForms.value = formCount + 1;
+      // clear textarea
+      const textarea = newForm.querySelector("textarea");
+      if (textarea) textarea.value = "";
+
+      // clear delete checkbox
+      const deleteCheckbox = newForm.querySelector('input[type="checkbox"]');
+      if (deleteCheckbox) deleteCheckbox.checked = false;
+      newForm.style.display = "flex";
+      formContainer.appendChild(newForm);
+      totalForms.value = formCount + 1;
     });
-});
-</script>
+
+    // Handle delete buttons
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("#delete-question")) {
+        const questionForm = e.target.closest("#question-form");
+        const deleteInput = questionForm.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        if (deleteInput) {
+          // Mark for deletion and hide
+          deleteInput.checked = true;
+          questionForm.style.display = "none";
+        }
+      }
+    });
+  });
+  </script>
+{% endblock content %}
