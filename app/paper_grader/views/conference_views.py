@@ -1,17 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from .models import Conference
-from .forms import ConferenceForm, QuestionFormSet
-
-
-def index(request):
-    conferences = Conference.objects.all()
-    context = {"conferences": conferences}
-    return render(request, "paper_grader/index.html", context)
-
+from ..models import Conference
+from ..forms import ConferenceForm, QuestionFormSet
 
 class ConferenceCreateView(View):
-    template_name = "paper_grader/conference_form.html"
+    template_name = "paper_grader/conference/conference_form.html"
 
     def get(self, request):
         return render(request, self.template_name, {
@@ -33,10 +26,10 @@ class ConferenceCreateView(View):
             "conference_form": conference_form,
             "formset": formset,
         })
-
+    
 
 class ConferenceUpdateView(View):
-    template_name = "paper_grader/conference_form.html"
+    template_name = "paper_grader/conference/conference_form.html"
 
     def get(self, request, conference_id):
         conference = get_object_or_404(Conference, pk=conference_id)
@@ -74,6 +67,6 @@ def conference_delete(request, conference_id):
         conference.delete()
         return redirect("index")
 
-    return render(request, "paper_grader/conference_confirm_delete.html", {
+    return render(request, "paper_grader/conference/conference_confirm_delete.html", {
         "conference": conference
     })

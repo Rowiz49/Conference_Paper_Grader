@@ -14,7 +14,6 @@
 
         <form method="post" class="space-y-6">
           {% csrf_token %}
-
           <!-- Conference fields -->
           <div>
             {{ conference_form.non_field_errors }}
@@ -60,13 +59,13 @@
                 </div>
               {% endif %}
               {% for form in formset %}
-                {% include "paper_grader/question_form.html" with form=form %}
+                {% include "paper_grader/conference/question_form.html" with form=form %}
               {% endfor %}
             </div>
 
             <!-- Hidden empty form template -->
             <template id="empty-form-template">
-              {% include "paper_grader/question_form.html" with form=formset.empty_form is_empty=True %}
+              {% include "paper_grader/conference/question_form.html" with form=formset.empty_form is_empty=True %}
             </template>
           </div>
 

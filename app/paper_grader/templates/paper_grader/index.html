@@ -1,48 +1,157 @@
 {% extends "paper_grader/base.html" %}
 {% load lucide %}
 {% block content %}
-    <div class="max-w-md mx-auto mt-8 card bg-base-100 shadow-sm border border-base-200">
-        <!--Conference Selector-->
-        <div class="card-body py-4">
-            <h2 class="card-title text-sm font-semibold text-base-content/70">
-                Conferences
-            </h2>
-            <form id="conference-selector"
-                  method="get"
-                  action=""
-                  class="flex flex-col gap-2">
-                <select id="conference"
-                        name="conference"
-                        class="select select-sm select-bordered w-full">
-                    <option value="">
-                        -- Choose a conference --
-                    </option>
-                    {% for conference in conferences %}
-                        <option value="{{ conference.id }}">
-                            {{ conference.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </form>
+    <form id="main-form"
+          method="post"
+          action=""
+          enctype="multipart/form-data"
+          class="flex flex-col md:flex-row gap-6 max-w-5xl mx-auto mt-8">
+        {% csrf_token %}
 
-            <div class="flex justify-end gap-2 mt-2">
-                <!-- Create -->
-                <a href="{% url 'conference_create' %}"
-                   class="btn btn-ghost btn-xs tooltip tooltip-top"
-                   data-tip="Create">{% lucide "plus" class="text-success" size=20 %}</a>
-                <!-- Edit -->
-                <a id="edit-btn"
-                   href="#"
-                   class="btn btn-ghost btn-xs tooltip tooltip-top, opacity-50 pointer-events-none"
-                   data-tip="Edit">{% lucide "pencil" class="text-info" size=20 %}</a>
-                <!-- Delete -->
-                <a id="delete-btn"
-                   href="#"
-                   class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
-                   data-tip="Delete">{% lucide "trash-2" class="text-error" size=20 %}</a>
+        <!-- Left side: Conference + Ollama -->
+        <div class="flex-1 flex flex-col gap-6">
+
+            <!-- Conference + CRUD -->
+            <div class="card bg-base-100 shadow-sm border border-base-200">
+                <div class="card-body py-4">
+                    <h2 class="card-title text-sm font-semibold text-base-content/70 flex items-center gap-2">
+                        {% lucide "notepad-text" %} Conference
+                    </h2>
+
+                    <div class="flex flex-col gap-2">
+                        <select id="conference" name="conference" class="select select-sm w-full">
+                            <option value="">
+                                -- Choose a conference --
+                            </option>
+                            {% for conference in conferences %}
+                                <option value="{{ conference.id }}">
+                                    {{ conference.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-2">
+                        <a href="{% url 'conference_create' %}"
+                           class="btn btn-ghost btn-xs tooltip tooltip-top"
+                           data-tip="Create">
+                            {% lucide "plus" class="text-success" size=20 %}
+                        </a>
+
+                        <a id="edit-btn"
+                           href="#"
+                           class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
+                           data-tip="Edit">
+                            {% lucide "pencil" class="text-info" size=20 %}
+                        </a>
+
+                        <a id="delete-btn"
+                           href="#"
+                           class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
+                           data-tip="Delete">
+                            {% lucide "trash-2" class="text-error" size=20 %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ollama Configuration -->
+            <div class="card bg-base-100 shadow-sm border border-base-200">
+                <div class="card-body py-4">
+                    <h2 class="card-title text-sm font-semibold text-base-content/70 flex items-center gap-2">
+                        {% lucide "bot" %} Ollama Configuration
+                    </h2>
+
+                    <div class="form-control mb-2">
+                        <label class="label">
+                            <span class="label-text text-sm text-base-content/70">Ollama URL</span>
+                        </label>
+                        <input type="url"
+                               id="ollama_url"
+                               name="ollama_url"
+                               placeholder="http://localhost:11434"
+                               class="input input-sm w-full"
+                               required>
+                    </div>
+
+                    <div class="form-control mb-2">
+                        <label class="label">
+                            <span class="label-text text-sm text-base-content/70">Model</span>
+                        </label>
+                        <input type="text"
+                               id="ollama_model"
+                               name="ollama_model"
+                               placeholder="llama3, mistral, etc."
+                               class="input input-sm w-full"
+                               required>
+                    </div>
+
+                    <fieldset class="fieldset mb-4">
+                        <legend class="fieldset-legend">
+                            API Key
+                        </legend>
+                        <input type="password"
+                               id="ollama_api_key"
+                               name="ollama_api_key"
+                               placeholder="Optional API key"
+                               class="input input-sm w-full">
+                        <p class="label">
+                            Optional
+                        </p>
+                    </fieldset>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- Right side: File Upload -->
+        <div class="flex-1 card bg-base-100 shadow-sm border border-base-200">
+            <div class="card-body">
+                <div class="card-title">
+                    {% lucide "upload" %} Upload Paper
+                </div>
+
+                <!-- File input with internal browse button -->
+                <div class="form-control relative w-full max-w-xs">
+                    <input type="file"
+                           id="file-input"
+                           name="files"
+                           accept=".pdf"
+                           class="file-input file-input-bordered w-full pr-24">
+                    <button type="button"
+                            id="browse-btn"
+                            class="btn btn-sm btn-primary absolute right-1 top-1">
+                        Browse
+                    </button>
+                </div>
+
+                <!-- File preview / skeleton -->
+                <div id="file-preview" class="mt-4 flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                        {% lucide "file-text" size=20 %}
+                        <span id="file-name" class="text-sm font-medium">No file selected</span>
+                    </div>
+
+                    <!-- Skeleton placeholder -->
+                    <div id="pdf-skeleton"
+                         class="h-50 w-full border border-base-200 rounded bg-base-200 animate-pulse">
+                    </div>
+
+                    <!-- PDF preview (hidden by default) -->
+                    <embed id="pdf-preview"
+                           type="application/pdf"
+                           title="pdf-preview"
+                           class="mt-2 w-full h-50 border border-base-200 rounded hidden">
+                </div>
+
+                <div class="card-actions justify-end mt-4">
+                    <button type="submit" form="main-form" class="btn btn-primary btn-sm">
+                        Upload & Process
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </form>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -50,8 +159,9 @@
             const editBtn = document.getElementById("edit-btn");
             const deleteBtn = document.getElementById("delete-btn");
 
-            selector.addEventListener("change", function() {
-                const id = this.value;
+            // ---- Conference logic ----
+            function updateConferenceButtons() {
+                const id = selector.value;
                 const disabled = !id;
 
                 editBtn.href = disabled ? "#" : `/conference/${id}/edit/`;
@@ -61,7 +171,57 @@
                     btn.classList.toggle("opacity-50", disabled);
                     btn.classList.toggle("pointer-events-none", disabled);
                 });
-            });
+            }
+
+            // Update on change
+            selector.addEventListener("change", updateConferenceButtons);
+
+            // Initialize buttons on page load
+            updateConferenceButtons();
+
+            // ---- File Preview Logic ----
+            const fileInput = document.getElementById("file-input");
+            const browseBtn = document.getElementById("browse-btn");
+            const fileName = document.getElementById("file-name");
+            const pdfPreview = document.getElementById("pdf-preview");
+            const pdfSkeleton = document.getElementById("pdf-skeleton");
+
+            // Function to update preview
+            function updateFilePreview() {
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    fileName.textContent = "No file selected";
+                    pdfPreview.classList.add("hidden");
+                    pdfSkeleton.classList.remove("hidden");
+                    pdfPreview.src = "";
+                    return;
+                }
+
+                fileName.textContent = file.name;
+
+                if (file.type === "application/pdf") {
+                    const url = URL.createObjectURL(file);
+                    pdfPreview.src = url;
+                    pdfPreview.classList.remove("hidden");
+                    pdfSkeleton.classList.add("hidden");
+                } else {
+                    pdfPreview.classList.add("hidden");
+                    pdfSkeleton.classList.remove("hidden");
+                    pdfPreview.src = "";
+                }
+            }
+
+            // Trigger file input on custom button
+            browseBtn.addEventListener("click", () => fileInput.click());
+
+            // Update preview on file selection
+            fileInput.addEventListener("change", updateFilePreview);
+
+            // Initialize preview if a file is already present
+            updateFilePreview();
         });
     </script>
+
+
 {% endblock content %}

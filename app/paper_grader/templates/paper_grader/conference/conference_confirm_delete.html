@@ -2,14 +2,18 @@
 {% block content %}
     <div class="max-w-md mx-auto mt-12 card bg-base-100 shadow-sm border border-base-200">
         <div class="card-body">
-            <h2 class="card-title text-error">Delete Conference</h2>
+            <h2 class="card-title text-error">
+                Delete Conference
+            </h2>
             <p>
                 Are you sure you want to delete the conference <strong>{{ conference.name }}</strong> and all its questions?
             </p>
             <form method="post" class="mt-4 flex justify-end gap-2">
                 {% csrf_token %}
                 <a href="{% url 'index' %}" class="btn btn-ghost">Cancel</a>
-                <button type="submit" class="btn btn-error">Yes, delete</button>
+                <button type="submit" class="btn btn-error">
+                    Yes, delete
+                </button>
             </form>
         </div>
     </div>
