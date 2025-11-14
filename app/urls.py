@@ -21,7 +21,7 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", views.index, name="index"),
+    path("", views.IndexView.as_view(), name="index"),
     path("conferences/new/", views.ConferenceCreateView.as_view(), name="conference_create"),
     path("conference/<int:conference_id>/edit/", views.ConferenceUpdateView.as_view(), name="conference_update"),
     path("conference/<int:conference_id>/delete/", views.conference_delete, name="conference_delete")
