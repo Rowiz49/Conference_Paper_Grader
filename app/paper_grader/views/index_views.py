@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from ..forms import PaperUploadForm
+from pydantic import BaseModel, RootModel
 import pymupdf4llm
 import pymupdf.layout
 from django.views import View
@@ -25,12 +26,48 @@ class IndexView(View):
             client = ollama.Client(
                 host=ollama_url
             )
-        messages = [
-            {'role': 'user',
-             'content': 'Tell me about this paper: ' + paper_text}
-        ]
+        
+        
+        class Rating(BaseModel):
+            position: int
+            question: str
+            rating: str
+            explanation: str
+
+        class RatingList(RootModel):
+            root: list[Rating] 
+
+        message =  f'You are a paper rater for the conference {conference.name}, you have been given the following questions that you must answer in order to evaluate the paper: \n'
+        for question in conference.question_set.all():
+            message += f'{question.position}. {question.question_text}\n'
+        message += 'Following these guidelines, evaluate each question for the following paper, you may answer with yes, partial, no and NA if not applicable. Add an explanation of your answer to each question.\n'
+        message += f'You must answer in json format, following the provided template: {str(RatingList.model_json_schema())}\n'
+        message += f'Here is the paper you must rate in markdown format: {paper_text}'
         print("chat started")
-        return client.chat(ollama_model, messages=messages).message.content
+        stream = client.chat(
+            model=ollama_model,
+            messages=[{'role':'user', 'content':message}],
+            format=RatingList.model_json_schema(),
+            stream=True,
+        )
+
+        in_thinking = False
+        content = ''
+        for chunk in stream:
+            if chunk.message.thinking:
+                if not in_thinking:
+                    in_thinking = True
+                    print('Thinking:\n', end='', flush=True)
+                print(chunk.message.thinking, end='', flush=True)
+            elif chunk.message.content:
+                if in_thinking:
+                    in_thinking = False
+                    print('\n\nAnswer:\n', end='', flush=True)
+                print(chunk.message.content, end='', flush=True)
+                # accumulate the partial content
+                content += chunk.message.content
+
+        return content
 
 
     def post(self, request):
@@ -42,10 +79,12 @@ class IndexView(View):
             ollama_api_key = form.cleaned_data['ollama_api_key']
             pdf_file = form.cleaned_data['files']
             
+            #Process to markdown
             pdf_file.seek(0)
             doc = pymupdf.open(stream=pdf_file.read(), filetype="pdf")
             md_text = pymupdf4llm.to_markdown(doc)
             doc.close()
+
             return render(request, 'paper_grader/pdf.html', {"text": self.llm_processing(conference,ollama_url,ollama_model,ollama_api_key,md_text)})
        
 
