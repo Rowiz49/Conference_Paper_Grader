@@ -1,0 +1,131 @@
+{% extends "paper_grader/base.html" %}
+{% load lucide %}
+{% block content %}
+    <div class="max-w-5xl mx-auto mt-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-base-content">
+                Paper Evaluation Results
+            </h1>
+            <a href="{% url 'index' %}" class="btn btn-ghost btn-sm">
+                {% lucide "arrow-left" size=20 %}
+                Back to Upload
+            </a>
+        </div>
+
+        <!-- Results Container -->
+        <div class="card bg-base-100 shadow-sm border border-base-200">
+            <div class="card-body">
+                <h2 class="card-title text-lg font-semibold text-base-content/70 flex items-center gap-2 mb-4">
+                    {% lucide "clipboard-check" %} Evaluation Questions
+                </h2>
+
+                <!-- Error Message (if any) -->
+                {% if error %}
+                    <div class="alert alert-error mb-4">
+                        {% lucide "alert-circle" %}
+                        <div>
+                            <h3 class="font-bold">
+                                Error Processing Response
+                            </h3>
+                            <div class="text-xs">
+                                {{ error }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if raw_text %}
+                        <div class="collapse collapse-arrow bg-base-200 mb-4">
+                            <input type="checkbox" />
+                            <div class="collapse-title text-sm font-medium">
+                                View Raw Response
+                            </div>
+                            <div class="collapse-content">
+                                <pre class="text-xs bg-base-300 p-4 rounded overflow-x-auto">{{ raw_text }}</pre>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Ratings List -->
+                <div class="flex flex-col gap-4">
+                    {% for rating in ratings %}
+                        <div class="card bg-base-200/50 border border-base-300">
+                            <div class="card-body p-4">
+                                <!-- Question Header -->
+                                <div class="flex items-start justify-between gap-4 mb-3">
+                                    <div class="flex items-start gap-3 flex-1">
+                                        <div class="badge badge-neutral badge-lg">
+                                            {{ rating.position }}
+                                        </div>
+                                        <h3 class="text-base font-medium text-base-content">
+                                            {{ rating.question }}
+                                        </h3>
+                                    </div>
+
+                                    <!-- Rating Badge -->
+                                    <div class="badge badge-lg badge-outline p-1
+                                                {% if rating.rating|lower == 'yes' %}
+                                                    badge-success
+                                                {% elif rating.rating|lower == 'partial' %}
+                                                    badge-warning
+                                                {% elif rating.rating|lower == 'no' %}
+                                                    badge-error
+                                                {% else %}
+                                                    badge-ghost
+                                                {% endif %}">
+                                        {% if rating.rating|lower == 'yes' %}
+                                            {% lucide "badge-check" size=22 %}
+                                        {% elif rating.rating|lower == 'partial' %}
+                                            {% lucide "badge-alert" size=22 %}
+                                        {% elif rating.rating|lower == 'no' %}
+                                            {% lucide "badge-x" size=22 %}
+                                        {% else %}
+                                            {% lucide "badge" size=22 %}
+                                        {% endif %}
+                                        {{ rating.rating|upper }}
+                                    </div>
+                                </div>
+
+                                <!-- Explanation -->
+                                <p class="text-sm text-base-content/80">
+                                    {{ rating.explanation }}
+                                </p>
+                            </div>
+                        </div>
+                    {% empty %}
+                        {% if not error %}
+                            <div class="alert alert-warning">
+                                {% lucide "alert-triangle" %}
+                                <span>No ratings available</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Actions -->
+                <div class="card-actions justify-end mt-6 pt-4 border-t border-base-300">
+                    <button onclick="window.print()" class="btn btn-ghost btn-sm">
+                        {% lucide "printer" size=20 %}
+                        Print
+                    </button>
+                    <a href="{% url 'index' %}" class="btn btn-primary btn-sm">
+                        {% lucide "upload" size=20 %}
+                        Upload Another Paper
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @media print {
+
+            .btn,
+            nav,
+            footer {
+                display: none;
+            }
+        }
+    </style>
+{% endblock content %}

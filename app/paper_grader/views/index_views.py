@@ -5,7 +5,7 @@ import pymupdf4llm
 import pymupdf.layout
 from django.views import View
 import ollama
-
+import json
 
 class IndexView(View):
     template_name = "paper_grader/index.html"
@@ -27,7 +27,7 @@ class IndexView(View):
                 host=ollama_url
             )
         
-        
+        # Classes for json format enforcment
         class Rating(BaseModel):
             position: int
             question: str
@@ -43,29 +43,12 @@ class IndexView(View):
         message += 'Following these guidelines, evaluate each question for the following paper, you may answer with yes, partial, no and NA if not applicable. Add an explanation of your answer to each question.\n'
         message += f'You must answer in json format, following the provided template: {str(RatingList.model_json_schema())}\n'
         message += f'Here is the paper you must rate in markdown format: {paper_text}'
-        print("chat started")
-        stream = client.chat(
+        
+        content = client.chat(
             model=ollama_model,
             messages=[{'role':'user', 'content':message}],
-            format=RatingList.model_json_schema(),
-            stream=True,
-        )
-
-        in_thinking = False
-        content = ''
-        for chunk in stream:
-            if chunk.message.thinking:
-                if not in_thinking:
-                    in_thinking = True
-                    print('Thinking:\n', end='', flush=True)
-                print(chunk.message.thinking, end='', flush=True)
-            elif chunk.message.content:
-                if in_thinking:
-                    in_thinking = False
-                    print('\n\nAnswer:\n', end='', flush=True)
-                print(chunk.message.content, end='', flush=True)
-                # accumulate the partial content
-                content += chunk.message.content
+            format=RatingList.model_json_schema()        
+            ).message.content
 
         return content
 
@@ -85,7 +68,37 @@ class IndexView(View):
             md_text = pymupdf4llm.to_markdown(doc)
             doc.close()
 
-            return render(request, 'paper_grader/pdf.html', {"text": self.llm_processing(conference,ollama_url,ollama_model,ollama_api_key,md_text)})
+            # Get LLM response
+            llm_response = self.llm_processing(
+                conference, 
+                ollama_url, 
+                ollama_model, 
+                ollama_api_key, 
+                md_text
+            )
+
+            try:
+                # Parse the JSON string
+                ratings_data = json.loads(llm_response)
+                
+                # Sort by position to ensure correct order
+                ratings_data.sort(key=lambda x: x.get('position', 0))
+                
+                return render(request, 'paper_grader/results.html', {
+                    "ratings": ratings_data,
+                    "conference": conference
+                })
+                
+            except json.JSONDecodeError as e:
+                # If JSON parsing fails, show error
+                return render(request, 'paper_grader/results.html', {
+                    "ratings": [],
+                    "error": f"Failed to parse LLM response: {str(e)}",
+                    "raw_text": llm_response
+                })
+        
+            # If form is not valid, re-render the form with errors
+            return render(request, 'paper_grader/index.html', {'form': form})
        
 
 

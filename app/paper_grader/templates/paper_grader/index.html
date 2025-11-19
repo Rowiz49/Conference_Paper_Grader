@@ -1,149 +1,186 @@
 {% extends "paper_grader/base.html" %}
 {% load lucide %}
 {% block content %}
-    <form id="main-form"
-          method="post"
-          action=""
-          enctype="multipart/form-data"
-          class="flex flex-col md:flex-row gap-6 max-w-5xl mx-auto mt-8">
-        {% csrf_token %}
-
-        <!-- Left side: Conference + Ollama -->
-        <div class="flex-1 flex flex-col gap-6">
-
-            <!-- Conference + CRUD -->
-            <div class="card bg-base-100 shadow-sm border border-base-200">
-                <div class="card-body py-4">
-                    <h2 class="card-title text-sm font-semibold text-base-content/70 flex items-center gap-2">
-                        {% lucide "notepad-text" %} Conference
-                    </h2>
-
-                    <div class="flex flex-col gap-2">
-                        {{ form.conference }}
-                        {% if form.conference.errors %}
-                            <span class="text-error text-xs">{{ form.conference.errors.0 }}</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="flex justify-end gap-2 mt-2">
-                        <a href="{% url 'conference_create' %}"
-                           class="btn btn-ghost btn-xs tooltip tooltip-top"
-                           data-tip="Create">
-                            {% lucide "plus" class="text-success" size=20 %}
-                        </a>
-
-                        <a id="edit-btn"
-                           href="#"
-                           class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
-                           data-tip="Edit">
-                            {% lucide "pencil" class="text-info" size=20 %}
-                        </a>
-
-                        <a id="delete-btn"
-                           href="#"
-                           class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
-                           data-tip="Delete">
-                            {% lucide "trash-2" class="text-error" size=20 %}
-                        </a>
-                    </div>
+    <!-- Loading Overlay (hidden by default) -->
+    <div id="loading-overlay"
+         class="fixed inset-0 bg-base-300/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="card bg-base-100 shadow-xl w-96">
+            <div class="card-body items-center text-center">
+                <div class="loading loading-spinner loading-lg text-primary">
                 </div>
-            </div>
-
-            <!-- Ollama Configuration -->
-            <div class="card bg-base-100 shadow-sm border border-base-200">
-                <div class="card-body py-4">
-                    <h2 class="card-title text-sm font-semibold text-base-content/70 flex items-center gap-2">
-                        {% lucide "bot" %} Ollama Configuration
-                    </h2>
-
-                    <div class="form-control mb-2">
-                        <label class="label">
-                            <span class="label-text text-sm text-base-content/70">Ollama URL</span>
-                        </label>
-                        {{ form.ollama_url }}
-                        {% if form.ollama_url.errors %}
-                            <span class="text-error text-xs">{{ form.ollama_url.errors.0 }}</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-control mb-2">
-                        <label class="label">
-                            <span class="label-text text-sm text-base-content/70">Model</span>
-                        </label>
-                        {{ form.ollama_model }}
-                        {% if form.ollama_model.errors %}
-                            <span class="text-error text-xs">{{ form.ollama_model.errors.0 }}</span>
-                        {% endif %}
-                    </div>
-
-                    <fieldset class="fieldset mb-4">
-                        <legend class="fieldset-legend">
-                            API Key
-                        </legend>
-                        {{ form.ollama_api_key }}
-                        <p class="label">
-                            Optional
-                        </p>
-                    </fieldset>
+                <h3 class="card-title mt-4">
+                    Processing Paper
+                </h3>
+                <p class="text-base-content/70">
+                    Analyzing your paper with your chosen LLM. This may take a few minutes...
+                </p>
+                <div class="mt-4 w-full">
+                    <progress class="progress progress-primary w-full"></progress>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Right side: File Upload -->
-        <div class="flex-1 card bg-base-100 shadow-sm border border-base-200">
-            <div class="card-body">
-                <div class="card-title">
-                    {% lucide "upload" %} Upload Paper
+    <div class="max-w-5xl mx-auto mt-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-base-content">
+                Paper Grader
+            </h1>
+            <small>
+                TFG ETSISI-UPM
+            </small>
+        </div>
+
+        <form id="main-form"
+              method="post"
+              action=""
+              enctype="multipart/form-data"
+              class="flex flex-col md:flex-row gap-6 max-w-5xl mx-auto mt-8">
+            {% csrf_token %}
+
+            <!-- Left side: Conference + Ollama -->
+            <div class="flex-1 flex flex-col gap-6">
+
+                <!-- Conference + CRUD -->
+                <div class="card bg-base-100 shadow-sm border border-base-200">
+                    <div class="card-body py-4">
+                        <h2 class="card-title text-sm font-semibold text-base-content/70 flex items-center gap-2">
+                            {% lucide "notepad-text" %} Conference
+                        </h2>
+
+                        <div class="flex flex-col gap-2">
+                            {{ form.conference }}
+                            {% if form.conference.errors %}
+                                <span class="text-error text-xs">{{ form.conference.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex justify-end gap-2 mt-2">
+                            <a href="{% url 'conference_create' %}"
+                               class="btn btn-ghost btn-xs tooltip tooltip-top"
+                               data-tip="Create">
+                                {% lucide "plus" class="text-success" size=20 %}
+                            </a>
+
+                            <a id="edit-btn"
+                               href="#"
+                               class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
+                               data-tip="Edit">
+                                {% lucide "pencil" class="text-info" size=20 %}
+                            </a>
+
+                            <a id="delete-btn"
+                               href="#"
+                               class="btn btn-ghost btn-xs tooltip tooltip-top opacity-50 pointer-events-none"
+                               data-tip="Delete">
+                                {% lucide "trash-2" class="text-error" size=20 %}
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- File input with internal browse button -->
-                <div class="form-control relative w-full max-w-xs">
-                    {{ form.files }}
-                    {% if form.files.errors %}
-                        <span class="text-error text-xs mt-1">{{ form.files.errors.0 }}</span>
-                    {% endif %}
-                    <button type="button"
-                            id="browse-btn"
-                            class="btn btn-sm btn-primary absolute right-1 top-1">
-                        Browse
-                    </button>
-                </div>
+                <!-- Ollama Configuration -->
+                <div class="card bg-base-100 shadow-sm border border-base-200">
+                    <div class="card-body py-4">
+                        <h2 class="card-title text-sm font-semibold text-base-content/70 flex items-center gap-2">
+                            {% lucide "bot" %} Ollama Configuration
+                        </h2>
 
-                <!-- File preview / skeleton -->
-                <div id="file-preview" class="mt-4 flex flex-col gap-2">
-                    <div class="flex items-center gap-2">
-                        {% lucide "file-text" size=20 %}
-                        <span id="file-name" class="text-sm font-medium">No file selected</span>
+                        <div class="form-control mb-2">
+                            <label class="label">
+                                <span class="label-text text-sm text-base-content/70">Ollama URL</span>
+                            </label>
+                            {{ form.ollama_url }}
+                            {% if form.ollama_url.errors %}
+                                <span class="text-error text-xs">{{ form.ollama_url.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-control mb-2">
+                            <label class="label">
+                                <span class="label-text text-sm text-base-content/70">Model</span>
+                            </label>
+                            {{ form.ollama_model }}
+                            {% if form.ollama_model.errors %}
+                                <span class="text-error text-xs">{{ form.ollama_model.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <fieldset class="fieldset mb-4">
+                            <legend class="fieldset-legend">
+                                API Key
+                            </legend>
+                            {{ form.ollama_api_key }}
+                            <p class="label">
+                                Optional
+                            </p>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right side: File Upload -->
+            <div class="flex-1 card bg-base-100 shadow-sm border border-base-200">
+                <div class="card-body">
+                    <div class="card-title">
+                        {% lucide "upload" %} Upload Paper
                     </div>
 
-                    <!-- Skeleton placeholder -->
-                    <div id="pdf-skeleton"
-                         class="h-50 w-full border border-base-200 rounded bg-base-200">
+                    <!-- File input with internal browse button -->
+                    <div class="form-control relative w-full max-w-xs">
+                        {{ form.files }}
+                        {% if form.files.errors %}
+                            <span class="text-error text-xs mt-1">{{ form.files.errors.0 }}</span>
+                        {% endif %}
+                        <button type="button"
+                                id="browse-btn"
+                                class="btn btn-sm btn-primary absolute right-1 top-1">
+                            Browse
+                        </button>
                     </div>
 
-                    <!-- PDF preview (hidden by default) -->
-                    <embed id="pdf-preview"
-                           type="application/pdf"
-                           title="pdf-preview"
-                           class="mt-2 w-full h-50 border border-base-200 rounded hidden">
-                </div>
+                    <!-- File preview / skeleton -->
+                    <div id="file-preview" class="mt-4 flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            {% lucide "file-text" size=20 %}
+                            <span id="file-name" class="text-sm font-medium">No file selected</span>
+                        </div>
 
-                <div class="card-actions justify-end mt-4">
-                    <button type="submit" form="main-form" class="btn btn-primary btn-sm">
-                        Upload & Process
-                    </button>
+                        <!-- Skeleton placeholder -->
+                        <div id="pdf-skeleton"
+                             class="h-50 w-full border border-base-200 rounded bg-base-200">
+                        </div>
+
+                        <!-- PDF preview (hidden by default) -->
+                        <embed id="pdf-preview"
+                               type="application/pdf"
+                               title="pdf-preview"
+                               class="mt-2 w-full h-50 border border-base-200 rounded hidden">
+                    </div>
+
+                    <div class="card-actions justify-end mt-4">
+                        <button type="submit"
+                                form="main-form"
+                                class="btn btn-primary btn-sm"
+                                id="submit-btn">
+                            Upload & Process
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
     </form>
 
-    <!-- Keep the same JavaScript -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const selector = document.getElementById("conference");
             const editBtn = document.getElementById("edit-btn");
             const deleteBtn = document.getElementById("delete-btn");
+            const mainForm = document.getElementById("main-form");
+            const loadingOverlay = document.getElementById("loading-overlay");
+            const submitBtn = document.getElementById("submit-btn");
 
             // ---- Conference logic ----
             function updateConferenceButtons() {
@@ -197,6 +234,25 @@
             browseBtn.addEventListener("click", () => fileInput.click());
             fileInput.addEventListener("change", updateFilePreview);
             updateFilePreview();
+
+            // ---- Form Submission with Loading Overlay ----
+            mainForm.addEventListener("submit", (e) => {
+                // Validate form has required data
+                const conference = selector.value;
+                const file = fileInput.files[0];
+
+                if (!conference || !file) {
+                    return; // Let default validation handle it
+                }
+
+                // Show loading overlay
+                loadingOverlay.classList.remove("hidden");
+                loadingOverlay.classList.add("flex");
+
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.classList.add("loading");
+            });
         });
     </script>
 
