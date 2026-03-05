@@ -97,6 +97,23 @@ class IndexView(View):
                 # Sort by position to ensure correct order
                 ratings_data.sort(key=lambda x: x.get('position', 0))
                 
+                # Build lookup: position -> actual question text
+                actual_questions = {
+                    q.position: q.question_text 
+                    for q in conference.question_set.all()
+                }
+
+                for rating in ratings_data:
+                    pos = rating.get('position')
+                    actual = actual_questions.get(pos, '')
+                    llm_question = rating.get('question', '').strip()
+                    if actual and llm_question != actual.strip():
+                        rating['question_mismatch'] = True
+                        rating['actual_question'] = actual
+                    else:
+                        rating['question_mismatch'] = False
+                        rating['actual_question'] = actual  # pass through for clarity
+
                 return render(request, result_template, {
                     "ratings": ratings_data,
                     "conference": conference

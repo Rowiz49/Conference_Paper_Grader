@@ -14,7 +14,7 @@ def add_conference_AAAI26_questions(apps, schema_editor):
     questions = [
         "This paper includes a conceptual outline and/or pseudocode description of AI methods introduced",
         "This paper clearly delineates statements that are opinions, hypothesis, and speculation from objective facts and results",
-        "This paper provides well marked pedagogical references for less-familiare readers to gain background necessary to replicate the paper",
+        "This paper provides well marked pedagogical references for less-familiar readers to gain background necessary to replicate the paper",
         "Does this paper make theoretical contributions?",
         "All assumptions and restrictions are stated clearly and formally.",
         "All novel claims are stated formally (e.g., in theorem statements).",

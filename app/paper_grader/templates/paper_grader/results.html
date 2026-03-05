@@ -69,9 +69,22 @@
                                         <div class="badge badge-neutral badge-lg">
                                             {{ rating.position }}
                                         </div>
-                                        <h3 class="text-base font-medium text-base-content">
-                                            {{ rating.question }}
-                                        </h3>
+                                        <div class="flex flex-col gap-1 flex-1">
+                                            <h3 class="text-base font-medium text-base-content">
+                                                {{ rating.question }}
+                                            </h3>
+
+                                            {% if rating.question_mismatch %}
+                                                <div class="alert alert-warning py-2 px-3 text-xs flex items-start gap-2 mt-1">
+                                                    {% lucide "triangle-alert" size=14 class="shrink-0 mt-0.5" %}
+                                                    <div>
+                                                        <span class="font-semibold">Question mismatch — the LLM returned a different wording.</span>
+                                                        <br>
+                                                        <span class="opacity-80">Actual question: <em>{{ rating.actual_question }}</em></span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
                                     </div>
 
                                     <!-- Rating Badge -->
