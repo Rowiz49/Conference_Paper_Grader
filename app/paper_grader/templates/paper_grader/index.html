@@ -184,7 +184,8 @@
 
             // ---- Conference logic ----
             function updateConferenceButtons() {
-                const id = selector.value;
+                const rawId = selector.value;
+                const id = /^[0-9]+$/.test(rawId) ? rawId : "";
                 const disabled = !id;
                 editBtn.href = disabled ? "#" : `/conference/${id}/edit/`;
                 deleteBtn.href = disabled ? "#" : `/conference/${id}/delete/`;
