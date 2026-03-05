@@ -46,7 +46,7 @@ docker build -t conference-paper-grader .
 docker run --network=host conference-paper-grader
 ```
 
-The app will be available at `http://localhost:8000`.
+The app will be available at `http://localhost:8965`.
 
 ### Local development
 
@@ -70,7 +70,7 @@ uv run python manage.py tailwind dev
 
 ### 1. Set up a Conference and Questions
 
-1. Go to `http://localhost:8000/admin`
+1. Go to `http://localhost:8965`
 2. Create a **Conference** with a name
 3. Add **Questions** to the conference — each question has a position (order) and the question text the LLM will answer
 
