@@ -184,7 +184,8 @@
 
             // ---- Conference logic ----
             function updateConferenceButtons() {
-                const id = selector.value;
+                const rawId = selector.value;
+                const id = /^\d+$/.test(rawId) ? rawId : "";
                 const disabled = !id;
                 editBtn.href = disabled ? "#" : `/conference/${id}/edit/`;
                 deleteBtn.href = disabled ? "#" : `/conference/${id}/delete/`;
@@ -349,14 +350,29 @@
                 }
 
                 fileName.textContent = file.name;
+
                 if (file.type === "application/pdf") {
-                    pdfPreview.src = URL.createObjectURL(file);
+                    // Revoke any previous blob URL to avoid memory leaks
+                    if (pdfPreview.src.startsWith("blob:")) {
+                        URL.revokeObjectURL(pdfPreview.src);
+                    }
+
+                    const objectUrl = URL.createObjectURL(file);
+
+                    // Validate it's a safe blob URL before assigning
+                    if (objectUrl.startsWith("blob:")) {
+                        pdfPreview.setAttribute("src", objectUrl);
+                    }
+
                     pdfPreview.classList.remove("hidden");
                     pdfSkeleton.classList.add("hidden");
                 } else {
+                    if (pdfPreview.src.startsWith("blob:")) {
+                        URL.revokeObjectURL(pdfPreview.src);
+                    }
+                    pdfPreview.setAttribute("src", "");
                     pdfPreview.classList.add("hidden");
                     pdfSkeleton.classList.remove("hidden");
-                    pdfPreview.src = "";
                 }
             }
 
