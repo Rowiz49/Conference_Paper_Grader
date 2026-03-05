@@ -57,6 +57,7 @@ class IndexView(View):
 
     def post(self, request):
         form = PaperUploadForm(request.POST, request.FILES)
+        result_template = 'paper_grader/results.html'
         if form.is_valid():
             conference = form.cleaned_data['conference']
             ollama_url = form.cleaned_data['ollama_url']
@@ -64,28 +65,28 @@ class IndexView(View):
             ollama_api_key = form.cleaned_data['ollama_api_key']
             pdf_file = form.cleaned_data['files']
             
-            #Process to markdown
-            pdf_file.seek(0)
-            doc = pymupdf.open(stream=pdf_file.read(), filetype="pdf")
-            md_text = pymupdf4llm.to_markdown(doc)
-            doc.close()
-
-            # Get LLM response
-            llm_response = self.llm_processing(
-                conference, 
-                ollama_url, 
-                ollama_model, 
-                ollama_api_key, 
-                md_text
-            )
-
             try:
+                # Process to markdown
+                pdf_file.seek(0)
+                doc = pymupdf.open(stream=pdf_file.read(), filetype="pdf")
+                md_text = pymupdf4llm.to_markdown(doc)
+                doc.close()
+
+                # Get LLM response
+                llm_response = self.llm_processing(
+                    conference, 
+                    ollama_url, 
+                    ollama_model, 
+                    ollama_api_key, 
+                    md_text
+                )
+
                 # Remove all wrapping content that the llm may have generated
                 start = llm_response.find('[')
                 end = llm_response.rfind(']')
 
                 if start == -1 or end == -1 or start >= end:
-                    raise json.JSONDecodeError("No valid JSON array found in input")
+                    raise json.JSONDecodeError("No valid JSON array found in input", "", 0)
 
                 # Extract the JSON content
                 llm_response = llm_response[start:end + 1]
@@ -96,22 +97,27 @@ class IndexView(View):
                 # Sort by position to ensure correct order
                 ratings_data.sort(key=lambda x: x.get('position', 0))
                 
-                return render(request, 'paper_grader/results.html', {
+                return render(request, result_template, {
                     "ratings": ratings_data,
                     "conference": conference
                 })
                 
             except json.JSONDecodeError as e:
-                # If JSON parsing fails, show error
-                return render(request, 'paper_grader/results.html', {
+                return render(request, result_template, {
                     "ratings": [],
                     "error": f"Failed to parse LLM response: {str(e)}",
-                    "raw_text": llm_response
+                    "raw_text": llm_response if 'llm_response' in locals() else "No response"
+                })
+            except Exception as e:
+                # Catch all other errors (Ollama connection, etc.)
+                return render(request, result_template, {
+                    "ratings": [],
+                    "error": f"Error processing paper: {str(e)}",
+                    "raw_text": ""
                 })
         
-            # If form is not valid, re-render the form with errors
-            return render(request, 'paper_grader/index.html', {'form': form})
-
+        # If form is not valid, re-render the form with errors
+        return render(request, 'paper_grader/index.html', {'form': form})
 
 
 @require_http_methods(["GET"])
